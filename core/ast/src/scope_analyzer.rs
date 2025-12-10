@@ -1686,9 +1686,14 @@ impl ScopeIndexVisitor {
             scope.set_index(self.index);
         }
         if let Some(scope) = &scopes.lexical_scope {
-            if !scope.all_bindings_local() {
-                self.index += 1;
-            }
+            match name_scope {
+                Some(_) => {
+                    if !scope.all_bindings_local() {
+                        self.index += 1;
+                    }
+                }
+                None => self.index += 1,
+            };
             scope.set_index(self.index);
         }
         self.visit_function_body_mut(body)?;
