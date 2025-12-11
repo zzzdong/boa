@@ -79,6 +79,14 @@ impl PutLexicalValue {
     ) {
         let value = context.vm.get_register(value.into());
         let binding_locator = context.vm.frame().code_block.bindings[usize::from(index)].clone();
+
+        println!(
+            "on PutLexicalValue, environments: {:#?}, value: {:?}, scope: {:?}",
+            context.vm.frame.environments,
+            value,
+            binding_locator.scope()
+        );
+
         context.vm.frame.environments.put_lexical_value(
             binding_locator.scope(),
             binding_locator.binding_index(),

@@ -90,6 +90,11 @@ impl ByteCompiler<'_> {
             .map_or(Sym::EMPTY_STRING, Identifier::sym)
             .to_js_string(self.interner());
 
+        println!(
+            "compile_class, name:{:?}, name_scope:{:?}",
+            class_name, class.name_scope
+        );
+
         let outer_scope = self.push_declarative_scope(class.name_scope);
 
         // The new span is not the same as the parent `ByteCompiler` have.
@@ -207,14 +212,26 @@ impl ByteCompiler<'_> {
 
         let mut static_elements = Vec::new();
 
-        if let Some(scope) = class.name_scope {
-            let binding = scope.get_identifier_reference(class_name.clone());
-            let index = self.insert_binding(binding);
-            self.emit_binding_access(
-                BindingAccessOpcode::PutLexicalValue,
-                &index,
-                &class_register,
-            );
+        if class.name.is_some() {
+            if let Some(scope) = class.name_scope {
+                let binding = scope.get_identifier_reference(class_name.clone());
+
+                println!(
+                    "on emit PutLexicalValue, class.name: {:?}, scope: {:#?}, binding: {:?}",
+                    class_name,
+                    scope,
+                    binding.locator()
+                );
+
+                // println!("compile_class binding: {:#?} index: {:?}", binding, index);
+
+                let index = self.insert_binding(binding);
+                self.emit_binding_access(
+                    BindingAccessOpcode::PutLexicalValue,
+                    &index,
+                    &class_register,
+                );
+            }
         }
 
         for element in class.elements {

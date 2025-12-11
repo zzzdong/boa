@@ -187,7 +187,11 @@ impl Scope {
     /// Fall back to the global scope if the binding is not found.
     #[must_use]
     pub fn get_identifier_reference(&self, name: JsString) -> IdentifierReference {
+        println!("=== get_identifier_reference: {:?} in {:?}", name, self);
+
         if let Some(binding) = self.inner.bindings.borrow().iter().find(|b| b.name == name) {
+            println!("=== get_identifier_reference found: {:?} in current scope@index({:?})", name, self.inner.index.get());
+
             IdentifierReference::new(
                 BindingLocator::declarative(
                     name,
@@ -199,6 +203,7 @@ impl Scope {
                 binding.escapes(),
             )
         } else if let Some(outer) = &self.inner.outer {
+            println!("=== get_identifier_reference found: {:?} in outer scope", name);
             outer.get_identifier_reference(name)
         } else {
             IdentifierReference::new(BindingLocator::global(name), false, true)

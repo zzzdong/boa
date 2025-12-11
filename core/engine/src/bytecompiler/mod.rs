@@ -518,6 +518,7 @@ pub struct ByteCompiler<'ctx> {
     pub(crate) annex_b_function_names: Vec<Sym>,
 }
 
+#[derive(Debug)]
 pub(crate) enum BindingKind {
     Stack(u32),
     Local(Option<u32>),

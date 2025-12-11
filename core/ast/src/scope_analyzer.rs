@@ -800,17 +800,24 @@ impl<'ast> VisitorMut<'ast> for BindingCollectorVisitor<'_> {
         &mut self,
         node: &'ast mut ClassExpression,
     ) -> ControlFlow<Self::BreakTy> {
-        let mut name_scope = None;
-        if let Some(name) = node.name
-            && node.name_scope.is_some()
-        {
-            let mut scope = Scope::new(self.scope.clone(), false);
+        // let mut name_scope = None;
+        // if let Some(name) = node.name
+        //     && node.name_scope.is_some()
+        // {
+        //     let mut scope = Scope::new(self.scope.clone(), false);
+        //     let name = name.to_js_string(self.interner);
+        //     scope.create_immutable_binding(name, true);
+        //     std::mem::swap(&mut self.scope, &mut scope);
+        //     name_scope = Some(scope);
+        // }
+
+        let mut name_scope = Scope::new(self.scope.clone(), false);
+        if let Some(name) = node.name {
             let name = name.to_js_string(self.interner);
-            scope.create_immutable_binding(name, true);
-            node.name_scope = Some(scope.clone());
-            std::mem::swap(&mut self.scope, &mut scope);
-            name_scope = Some(scope);
+            name_scope.create_immutable_binding(name, true);
         }
+        node.name_scope = Some(name_scope.clone());
+        std::mem::swap(&mut self.scope, &mut name_scope);
 
         if let Some(super_ref) = &mut node.super_ref {
             self.visit_expression_mut(super_ref)?;
@@ -821,9 +828,15 @@ impl<'ast> VisitorMut<'ast> for BindingCollectorVisitor<'_> {
         for element in &mut *node.elements {
             self.visit_class_element_mut(element)?;
         }
-        if let Some(mut scope) = name_scope {
-            std::mem::swap(&mut self.scope, &mut scope);
-        }
+
+        // if let Some(mut scope) = name_scope {
+        //     std::mem::swap(&mut self.scope, &mut scope);
+        //     node.name_scope = Some(scope);
+        // }
+
+        std::mem::swap(&mut self.scope, &mut name_scope);
+        node.name_scope = Some(name_scope);
+
         ControlFlow::Continue(())
     }
 
@@ -1423,9 +1436,10 @@ impl<'ast> VisitorMut<'ast> for ScopeIndexVisitor {
     ) -> ControlFlow<Self::BreakTy> {
         let index = self.index;
         if let Some(scope) = &node.name_scope {
-            if !scope.all_bindings_local() {
-                self.index += 1;
-            }
+            // if !scope.all_bindings_local() {
+            //     self.index += 1;
+            // }
+            self.index += 1;
             scope.set_index(self.index);
         }
         if let Some(super_ref) = &mut node.super_ref {
@@ -1686,14 +1700,9 @@ impl ScopeIndexVisitor {
             scope.set_index(self.index);
         }
         if let Some(scope) = &scopes.lexical_scope {
-            match name_scope {
-                Some(_) => {
-                    if !scope.all_bindings_local() {
-                        self.index += 1;
-                    }
-                }
-                None => self.index += 1,
-            };
+            if !scope.all_bindings_local() {
+                self.index += 1;
+            }
             scope.set_index(self.index);
         }
         self.visit_function_body_mut(body)?;

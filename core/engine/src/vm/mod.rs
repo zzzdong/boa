@@ -454,6 +454,8 @@ impl Vm {
     }
 
     pub(crate) fn push_frame(&mut self, mut frame: CallFrame) {
+        println!("=== push frame, frame: {}", frame.code_block);
+
         let current_stack_length = self.stack.stack.len();
         frame.set_register_pointer(current_stack_length as u32);
 
